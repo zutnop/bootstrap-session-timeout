@@ -1,4 +1,8 @@
 /*
+ * ERKO, 2016-09-08: added custom code
+ * 1) to support onLogout callback
+ * 2) to avoid the initial keep-alive request on every page load
+ *
  * bootstrap-session-timeout
  * www.orangehilldev.com
  *
@@ -28,6 +32,7 @@
             onStart: false,
             onWarn: false,
             onRedir: false,
+            onLogout: false, // ERKO: custom code to support onLogout callback
             countdownMessage: false,
             countdownBar: false,
             countdownSmart: false
@@ -83,7 +88,13 @@
 
             // "Logout" button click
             $('#session-timeout-dialog-logout').on('click', function() {
-                window.location = opt.logoutUrl;
+                // ERKO: custom code to support onLogout callback
+                // Check for onLogout callback function, if there is none, redirect to logoutUrl
+                if (typeof opt.onLogout !== 'function') {
+                    window.location = opt.logoutUrl;
+                } else {
+                    opt.onLogout(opt);
+                }
             });
             // "Stay Connected" button click
             $('#session-timeout-dialog').on('hide.bs.modal', function() {
@@ -123,7 +134,11 @@
 
         // Keeps the server side connection live, by pingin url set in keepAliveUrl option.
         // KeepAlivePinged is a helper var to ensure the functionality of the keepAliveInterval option
-        var keepAlivePinged = false;
+        // ERKO: custom code to avoid the initial keep-alive request on every page load
+        var keepAlivePinged = true;
+        setTimeout(function() {
+            keepAlivePinged = false;
+        }, opt.keepAliveInterval);
 
         function keepAlive() {
             if (!keepAlivePinged) {
